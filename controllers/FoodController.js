@@ -1,4 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
+const { error } = require("console");
 const prisma = new PrismaClient();
 
 module.exports = {
@@ -65,7 +66,7 @@ module.exports = {
       return res.status(500).send({ error: e.message });
     }
   },
-  remove : async (req, res) => {
+  remove: async (req, res) => {
     try {
       await prisma.food.update({
         data: {
@@ -82,24 +83,24 @@ module.exports = {
   },
   update: async (req, res) => {
     try {
-     //remove old file in food 
-     const oldFood = await prisma.food.findUnique({
-      where :{
-        id:parseInt(req.body.id)
-      }
-    })
-    if(oldFood.img != ''){
-        if(req.body.img != ''){
-          const fs =require('fs');
+      //remove old file in food 
+      const oldFood = await prisma.food.findUnique({
+        where: {
+          id: parseInt(req.body.id)
+        }
+      })
+      if (oldFood.img != '') {
+        if (req.body.img != '') {
+          const fs = require('fs');
           fs.unlinkSync('uploads/' + oldFood.img);
         }
-    }
+      }
       await prisma.food.update({
         data: {
           foodTypeId: req.body.foodTypeId,
           name: req.body.name,
           remark: req.body.remark,
-          image:req.body.image,
+          image: req.body.image,
           price: req.body.price,
           img: req.body.img,
           foodType: req.body.foodType,
@@ -111,6 +112,26 @@ module.exports = {
       return res.send({ message: "success" });
     } catch (e) {
       return res.status(500).send({ error: e.message });
+    }
+  },
+  filter: async (req, res) => {
+    try{
+      let condition = {
+        status:'use',
+      }
+      if (req.params.foodType != 'all'){
+        condition.foodType = req.params.foodType;
+      }
+
+      const foods = await prisma.food.findMany({
+        where: condition,
+        orderBy:{
+          id: 'desc'
+        }
+      })
+      return res.send({results:foods})
+    } catch(e){
+      return res.status(500).send({error: e.message});
     }
   }
 }
